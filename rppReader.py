@@ -8,13 +8,13 @@ def makePandas(lasconfigList, rppDic, navDevDic, camDevDic, lasDevDic, manualRi)
     """
     Takes the dictionaries gathered from the RPP scrape and turns them into pandas dataframes.
     Violently simple. Separate in case it needs to be tweaked.
-    :param lasconfigList: Lasconfig list scraped from RPP
-    :param rppDic: Records dic scraped from the RPP
-    :param navDevDic: Nav device information dic scraped from the RPP
-    :param camDevDic: Camera device information dic scraped from the RPP
-    :param lasDevDic: LiDAR device information dic scraped from the RPP
-    :param manualRi: Boolean flag indicating if swaths were assigned manually in RiWorld
-    :return: Ungrouped collection of dataframes - one for each dictionary/list above.
+    :param lasconfigList:         Lasconfig list scraped from RPP
+    :param rppDic:                Records dic scraped from the RPP
+    :param navDevDic:             Nav device information dic scraped from the RPP
+    :param camDevDic:             Camera device information dic scraped from the RPP
+    :param lasDevDic:             LiDAR device information dic scraped from the RPP
+    :param manualRi:              Boolean flag indicating if swaths were assigned manually in RiWorld
+    :return:                      Ungrouped collection of dataframes - one for each dictionary/list above.
 
     USAGE:
     lasconfigPandas, navDevPandas, recordPandas,
@@ -37,8 +37,8 @@ def create_connection(outputDB):
     """
     Creates a connection to a SQLite database file
 
-    :param outputDB Full path to database file
-    :returns Connection object
+    :param outputDB:              Full path to database file
+    :return:                      Connection object
     """
     dbFile = outputDB
     conn = None
@@ -52,11 +52,11 @@ def create_connection(outputDB):
 def write_outputDB(outputDB, lasdevPandas, camdevPandas, navdevPandas, recordPandas)
     """
     Writes the dataframes to the SQLite database file.
-    :param outputDB     Full path to output SQLite database file.
-    :param lasdevPandas Dataframe of information about the LiDAR scanner
-    :param camdevPandas Dataframe of information about the camera
-    :param navdevPandas Dataframe of information about the IMU/nav system
-    :param recordPandas Dataframe of information about the scanner records (swaths)
+    :param outputDB:              Full path to output SQLite database file.
+    :param lasdevPandas:          Dataframe of information about the LiDAR scanner
+    :param camdevPandas:          Dataframe of information about the camera
+    :param navdevPandas:          Dataframe of information about the IMU/nav system
+    :param recordPandas:          Dataframe of information about the scanner records (swaths)
     """
     conn = create_connection(outputDB)
     if conn is not None:
@@ -82,10 +82,10 @@ def timeIssueEditor(rppDic, negIssue, timeZoneEdit):
     I have also seen it occur in both a positive and negative direction.
     Regardless of the cause, this function seeks to be an available solution for that issue.
 
-    :param rppDic Dictionary of records and record information extracted from rpp
-    :param negIssue Boolean inducating if the time delta needs to be negative
-    :param timeZoneEdit integer of minutes' absolute difference required
-    :returns updated RPP dic
+    :param rppDic:                Dictionary of records and record information extracted from rpp
+    :param negIssue:              Boolean inducating if the time delta needs to be negative
+    :param timeZoneEdit:          integer of minutes' absolute difference required
+    :return updated RPP dic:
 
     USAGE:
     rppDic = time_issue_editor(rppDic, False, 30)
@@ -112,13 +112,13 @@ def organiseRpp(rppLink, gpsSA, gpsNSW, negIssue):
     """
     Scrapes the RPP for information. This version can handle both pre- and post-RiWorld versions.
 
-    :param rppLink Full file path to RPP file
-    :param gpsSA Boolean indicating presence of time zone issue in line with South Australian time
-                  zone offset, i.e. +30 or -30 min offset.
-    :param gpsNSW Boolean indicating presence of time zone offset in line with New South Wales time
-                   zone offset, i.e. +60 or -60 min offset.
-    :param negIssue Boolean indicating whether or not the offset needs to be subtracted rather than added.
-    :returns rppDic, lasdevDic, camdevDic, navdevDic, lasconfigList, camSettings
+    :param rppLink:               Full file path to RPP file
+    :param gpsSA:                 Boolean indicating presence of time zone issue in line with South Australian time
+                                       zone offset, i.e. +30 or -30 min offset.
+    :param gpsNSW:                Boolean indicating presence of time zone offset in line with New South Wales time
+                                       zone offset, i.e. +60 or -60 min offset.
+    :param negIssue:              Boolean indicating whether or not the offset needs to be subtracted rather than added.
+    :returns rppDic, lasdevDic, camdevDic, navdevDic, lasconfigList, camSettings:
 
     USAGE:
     rppDic, lasdevDic, camdevDic, navdevDic, lasconfigList, camSettings = organiseRpp(full_path, False, True, False)
@@ -222,14 +222,14 @@ def workflowHandler(rppLink, gpsSA, gpsNSW, negIssue, outputDB, manualRiWorldUse
     """
     Workflow manager.
 
-    :param rppLink Full file path to RPP file
-    :param gpsSA Boolean indicating presence of time zone issue in line with South Australian time
-                  zone offset, i.e. +30 or -30 min offset.
-    :param gpsNSW Boolean indicating presence of time zone offset in line with New South Wales time
-                   zone offset, i.e. +60 or -60 min offset.
-    :param negIssue Boolean indicating whether or not the offset needs to be subtracted rather than added.
-    :param outputDB     Full path to output SQLite database file.
-    :param manualRiWorldUsed: Boolean flag indicating if swaths were assigned manually in RiWorld
+    :param rppLink:               Full file path to RPP file
+    :param gpsSA:                 Boolean indicating presence of time zone issue in line with South Australian time
+                                       zone offset, i.e. +30 or -30 min offset.
+    :param gpsNSW:                Boolean indicating presence of time zone offset in line with New South Wales time
+                                       zone offset, i.e. +60 or -60 min offset.
+    :param negIssue:              Boolean indicating whether or not the offset needs to be subtracted rather than added.
+    :param outputDB:              Full path to output SQLite database file.
+    :param manualRiWorldUsed:     Boolean flag indicating if swaths were assigned manually in RiWorld
     """
     rppDic, lasdevDic, camdevDic, navdevDic, lasconfigList, camSettings = organiseRpp(rppLink, gpsSA, gpsNSW, negIssue)
     lasconfigPandas, navDevPandas, recordPandas, camDevPandas, lasDevPandas = makePandas(lasconfigList, rppDic, navDevDic,
