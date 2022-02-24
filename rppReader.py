@@ -2,6 +2,7 @@ import os
 import datetime
 import sqlite3
 import xml.etree.ElementTree as e_t
+import pandas as pd
 
 
 def makePandas(lasconfigList, rppDic, navDevDic, camDevDic, lasDevDic, manualRi):
@@ -49,7 +50,7 @@ def create_connection(outputDB):
     return conn
 
 
-def write_outputDB(outputDB, lasdevPandas, camdevPandas, navdevPandas, recordPandas)
+def write_outputDB(outputDB, lasdevPandas, camdevPandas, navdevPandas, recordPandas):
     """
     Writes the dataframes to the SQLite database file.
     :param outputDB:              Full path to output SQLite database file.
@@ -58,6 +59,7 @@ def write_outputDB(outputDB, lasdevPandas, camdevPandas, navdevPandas, recordPan
     :param navdevPandas:          Dataframe of information about the IMU/nav system
     :param recordPandas:          Dataframe of information about the scanner records (swaths)
     """
+    print('Writing output file...')
     conn = create_connection(outputDB)
     if conn is not None:
         with conn:
@@ -90,6 +92,7 @@ def timeIssueEditor(rppDic, negIssue, timeZoneEdit):
     USAGE:
     rppDic = time_issue_editor(rppDic, False, 30)
     """
+    print('Applying time zone correction...')
     if negIssue:
         h = -1 * timeZoneEdit
     else:
@@ -123,6 +126,7 @@ def organiseRpp(rppLink, gpsSA, gpsNSW, negIssue):
     USAGE:
     rppDic, lasdevDic, camdevDic, navdevDic, lasconfigList, camSettings = organiseRpp(full_path, False, True, False)
     """
+    print('Reading RPP...')
     rppDic = {}
     lasdevDic = {}
     camdevDic = {}
@@ -163,7 +167,7 @@ def organiseRpp(rppLink, gpsSA, gpsNSW, negIssue):
             try:
                 recInfo = [x for x in elem.findall(".objects/object/[@kind='lasdata']")][0]
             except IndexError:
-                print('Misfire detected')
+                print('Misfire detected, index ', i)
                 recInfo = None
             if recInfo is not None:
                 recordName = elem.attrib['name']
@@ -231,9 +235,10 @@ def workflowHandler(rppLink, gpsSA, gpsNSW, negIssue, outputDB, manualRiWorldUse
     :param outputDB:              Full path to output SQLite database file.
     :param manualRiWorldUsed:     Boolean flag indicating if swaths were assigned manually in RiWorld
     """
-    rppDic, lasdevDic, camdevDic, navdevDic, lasconfigList, camSettings = organiseRpp(rppLink, gpsSA, gpsNSW, negIssue)
+    rppDic, lasDevDic, camDevDic, navDevDic, lasconfigList, camSettings = organiseRpp(rppLink, gpsSA, gpsNSW, negIssue)
     lasconfigPandas, navDevPandas, recordPandas, camDevPandas, lasDevPandas = makePandas(lasconfigList, rppDic, navDevDic,
                                                            camDevDic, lasDevDic, manualRiWorldUsed)
-    write_outputDB(outputDB, lasdevPandas, camdevPandas, navdevPandas, recordPandas)
+    write_outputDB(outputDB, lasDevPandas, camDevPandas, navDevPandas, recordPandas)
+    print('done')
     
     
