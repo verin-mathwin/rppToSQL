@@ -27,7 +27,10 @@ def makePandas(lasconfigList, rppDic, navDevDic, camDevDic, lasDevDic, manualRi)
         'lasconfig_index')
     recordPandas = pd.DataFrame.from_dict(rppDic, orient='index')
     if not manualRi:
-        recordPandas.dropna(subset=['scan-script'], inplace=True)
+        try:
+            recordPandas.dropna(subset=['scan-script'], inplace=True)
+        except KeyError:
+            print('warning - no Scan Script info saved')
     navDevPandas = pd.DataFrame.from_dict(navDevDic, orient='index')
     camDevPandas = pd.DataFrame.from_dict(camDevDic, orient='index')
     lasDevPandas = pd.DataFrame.from_dict(lasDevDic, orient='index')
