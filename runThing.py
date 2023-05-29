@@ -1,6 +1,6 @@
 import rppReader
 
-rppLink = r"D:\TroubleShooting_20220218\220209_041805\220209_041805.rpp"
-outFile = r"D:\TroubleShooting_20220218\220209_041805\220209_041805.db"
+rppLink = r"D:\Upload_Temp\joe_test_iiq\20220530_UC\VUX240_BORESIGHT.rpp"
+outFile = r"D:\Upload_Temp\joe_test_iiq\20220530_UC\VUX240_BORESIGHT.db"
 
 rppReader.workflowHandler(rppLink, False, False, False, outFile, False)
