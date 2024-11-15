@@ -114,7 +114,7 @@ def timeIssueEditor(rppDic, negIssue, timeZoneEdit):
         return rppDic
 
 
-def organiseRpp(rppLink, gpsSA, gpsNSW, negIssue):
+def organiseRpp(rppLink, gpsSA, gpsNSW, negIssue, segments):
     """
     Scrapes the RPP for information. This version can handle both pre- and post-RiWorld versions.
 
@@ -212,6 +212,8 @@ def organiseRpp(rppLink, gpsSA, gpsNSW, negIssue):
                 except KeyError:  # can occur if system shut down abruptly. assume rest is this swath
                     if i == len(records) - 1:
                         dataDic['time-end'] = None  # will add thing to check for this later, once we know end time
+                    elif segments:
+                        dataDic['time-end'] = None 
                     else:
                         raise KeyError
                 rppDic[swathName] = dataDic
@@ -225,7 +227,7 @@ def organiseRpp(rppLink, gpsSA, gpsNSW, negIssue):
     return rppDic, lasdevDic, camdevDic, navdevDic, lasconfigList, camSettings
 
 
-def workflowHandler(rppLink, gpsSA, gpsNSW, negIssue, outputDB, manualRiWorldUsed):
+def workflowHandler(rppLink, gpsSA, gpsNSW, negIssue, outputDB, manualRiWorldUsed, segments):
     """
     Workflow manager.
 
@@ -238,10 +240,11 @@ def workflowHandler(rppLink, gpsSA, gpsNSW, negIssue, outputDB, manualRiWorldUse
     :param outputDB:              Full path to output SQLite database file.
     :param manualRiWorldUsed:     Boolean flag indicating if swaths were assigned manually in RiWorld
     """
-    rppDic, lasDevDic, camDevDic, navDevDic, lasconfigList, camSettings = organiseRpp(rppLink, gpsSA, gpsNSW, negIssue)
+    rppDic, lasDevDic, camDevDic, navDevDic, lasconfigList, camSettings = organiseRpp(rppLink, gpsSA, gpsNSW, negIssue, segments)
     lasconfigPandas, navDevPandas, recordPandas, camDevPandas, lasDevPandas = makePandas(lasconfigList, rppDic, navDevDic,
                                                            camDevDic, lasDevDic, manualRiWorldUsed)
     write_outputDB(outputDB, lasDevPandas, camDevPandas, navDevPandas, recordPandas)
     print('done')
+    return recordPandas
     
     
