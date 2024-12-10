@@ -22,3 +22,5 @@ I have not tested this particular version just yet, but the original script from
 Whilst technically the output is fully visible in RiProcess etc, I find this neat for:
 - quick lookup of basic info
 - metadata compilation
+
+EDIT late 2024: Now exports record Pandas innto shapefile and CSV.
