@@ -3,9 +3,29 @@ import datetime
 import sqlite3
 import xml.etree.ElementTree as e_t
 import pandas as pd
+import re
+from packaging import version  # Handles version comparisons properly
 
 
-def makePandas(lasconfigList, rppDic, navDevDic, camDevDic, lasDevDic, manualRi):
+def getModifier(root):
+    modifier_element = root.find(".//modifier")  # Find the modifier tag
+    if modifier_element is not None:
+        return modifier_element.get("data")  # Return the 'data' attribute value
+    return None  
+
+
+def determinVer(modifier):
+    if modifier is None:
+        return "A"
+    match = re.search(r"\d+\.\d+\.\d+", modifier)
+    if not match:
+        return "A"
+    modifier_version = version.parse(match.group())  # Convert to version object
+    threshold_version = version.parse("1.9.6")  # Define threshold
+    return "B" if modifier_version >= threshold_version else "A"
+
+
+def makePandas(lasconfigList, rppDic, navDevDic, camDevDic, lasDevDic, manualRi, ver):
     """
     Takes the dictionaries gathered from the RPP scrape and turns them into pandas dataframes.
     Violently simple. Separate in case it needs to be tweaked.
@@ -26,6 +46,9 @@ def makePandas(lasconfigList, rppDic, navDevDic, camDevDic, lasDevDic, manualRi)
     lasconfigPandas = pd.DataFrame(columns=['lasconfig_index', 'lasconfig'], data=lasconfigList).set_index(
         'lasconfig_index')
     recordPandas = pd.DataFrame.from_dict(rppDic, orient='index')
+    if "B" in ver:
+        print("record debug")
+        recordPandas.info()
     if not manualRi:
         try:
             recordPandas.dropna(subset=['scan-script'], inplace=True)
@@ -114,6 +137,34 @@ def timeIssueEditor(rppDic, negIssue, timeZoneEdit):
         return rppDic
 
 
+def read194nav(project):
+    navSystem = [x for x in project.findall(".objects/object/[@kind='SYSTEM']/objects/object/[@kind='NAVDEVICES']")][0]
+    nav_fields = [x for x in navSystem.findall(".objects/object/fields/field")]
+    lasSystem = [x for x in project.findall(".objects/object/[@kind='SYSTEM']/objects/object/[@kind='LASDEVICES']")][0]
+    lasSettings = [x for x in project.findall(".objects/object/[@kind='SYSTEM']/objects/object/[@kind='LASCONFIGS']")][0]
+    camSystem = [x for x in project.findall(".objects/object/[@kind='SYSTEM']/objects/object/[@kind='CAMDEVICES']")][0]
+    camSettings = [x for x in project.findall(".objects/object/[@kind='SYSTEM']/objects/object/[@kind='CAMCONFIGS']")][0] 
+    for a in nav_fields:
+        navdevDic[a.attrib['name']] = a.attrib['data']
+    lasdev_fields = [x for x in lasSystem.findall(".objects/object/fields/field")]
+    for a in lasdev_fields:
+        lasdevDic[a.attrib['name']] = a.attrib['data']
+    camdev_fields = [x for x in camSystem.findall(".objects/object/fields/field")]
+    for a in camdev_fields:
+        camdevDic[a.attrib['name']] = a.attrib['data']
+    lasSettingList = [x for x in lasSettings.findall(".objects/object")]
+    lasconfigList = [(
+            lc.attrib['name'].replace(' m', 'm').replace(' kn', 'kn').replace(' kHz', 'kHz').replace(
+                ' lps', 'lps').replace('(', '').replace(')', '').replace('PWR=', ''),
+            str(lasSettingList.index(lc))) for lc in lasSettingList]
+    return navSystem, nav_fields, lasSystem, lasSettings, camSystem, camSettings, navdevDic, lasdevDic, camdevDic, lasSettingList, lasconfigList
+
+
+def read195nav():
+    pass
+
+
+
 def organiseRpp(rppLink, gpsSA, gpsNSW, negIssue, segments):
     """
     Scrapes the RPP for information. This version can handle both pre- and post-RiWorld versions.
@@ -138,34 +189,23 @@ def organiseRpp(rppLink, gpsSA, gpsNSW, negIssue, segments):
     camSettings = []
     tree = e_t.parse(rppLink)
     root = tree.getroot()
+    
     projects = [x for x in root.findall(".content/object/[@kind='project']")]
+    mod = getModifier(root)
+    classRPP = determinVer(mod)
+    print(mod)
+    print("Found RPP of type", classRPP)
+    print("##")
     for project in projects:
         print(project.attrib['name'])
         records = [x for x in project.findall(".objects/object/[@kind='RECORDS']/objects/object/[@kind='record']")]
-        navSystem = \
-            [x for x in project.findall(".objects/object/[@kind='SYSTEM']/objects/object/[@kind='NAVDEVICES']")][0]
-        lasSystem = \
-            [x for x in project.findall(".objects/object/[@kind='SYSTEM']/objects/object/[@kind='LASDEVICES']")][0]
-        lasSettings = \
-            [x for x in project.findall(".objects/object/[@kind='SYSTEM']/objects/object/[@kind='LASCONFIGS']")][0]
-        camSystem = \
-            [x for x in project.findall(".objects/object/[@kind='SYSTEM']/objects/object/[@kind='CAMDEVICES']")][0]
-        camSettings = \
-            [x for x in project.findall(".objects/object/[@kind='SYSTEM']/objects/object/[@kind='CAMCONFIGS']")][0]
-        nav_fields = [x for x in navSystem.findall(".objects/object/fields/field")]
-        for a in nav_fields:
-            navdevDic[a.attrib['name']] = a.attrib['data']
-        lasdev_fields = [x for x in lasSystem.findall(".objects/object/fields/field")]
-        for a in lasdev_fields:
-            lasdevDic[a.attrib['name']] = a.attrib['data']
-        camdev_fields = [x for x in camSystem.findall(".objects/object/fields/field")]
-        for a in camdev_fields:
-            camdevDic[a.attrib['name']] = a.attrib['data']
-        lasSettingList = [x for x in lasSettings.findall(".objects/object")]
-        lasconfigList = [(
-            lc.attrib['name'].replace(' m', 'm').replace(' kn', 'kn').replace(' kHz', 'kHz').replace(
-                ' lps', 'lps').replace('(', '').replace(')', '').replace('PWR=', ''),
-            str(lasSettingList.index(lc))) for lc in lasSettingList]
+
+
+        if "A" in classRPP:
+            navSystem, nav_fields, lasSystem, lasSettings, camSystem, camSettings, navdevDic, lasdevDic, camdevDic, lasSettingList, lasconfigList =  read194nav(project)
+        elif "B" in classRPP:
+            pass
+
         for i, elem in enumerate(records):
             try:
                 recInfo = [x for x in elem.findall(".objects/object/[@kind='lasdata']")][0]
@@ -224,7 +264,7 @@ def organiseRpp(rppLink, gpsSA, gpsNSW, negIssue, segments):
     if gpsNSW:
         rppDic = timeIssueEditor(rppDic, negIssue, 1)
 
-    return rppDic, lasdevDic, camdevDic, navdevDic, lasconfigList, camSettings
+    return rppDic, lasdevDic, camdevDic, navdevDic, lasconfigList, camSettings, classRPP
 
 
 def workflowHandler(rppLink, gpsSA, gpsNSW, negIssue, outputDB, manualRiWorldUsed, segments):
@@ -240,11 +280,14 @@ def workflowHandler(rppLink, gpsSA, gpsNSW, negIssue, outputDB, manualRiWorldUse
     :param outputDB:              Full path to output SQLite database file.
     :param manualRiWorldUsed:     Boolean flag indicating if swaths were assigned manually in RiWorld
     """
-    rppDic, lasDevDic, camDevDic, navDevDic, lasconfigList, camSettings = organiseRpp(rppLink, gpsSA, gpsNSW, negIssue, segments)
+    rppDic, lasDevDic, camDevDic, navDevDic, lasconfigList, camSettings, classRPP = organiseRpp(rppLink, gpsSA, gpsNSW, negIssue, segments)
     lasconfigPandas, navDevPandas, recordPandas, camDevPandas, lasDevPandas = makePandas(lasconfigList, rppDic, navDevDic,
-                                                           camDevDic, lasDevDic, manualRiWorldUsed)
+                                                           camDevDic, lasDevDic, manualRiWorldUsed, classRPP)
     write_outputDB(outputDB, lasDevPandas, camDevPandas, navDevPandas, recordPandas)
     print('done')
+    print('###################')
+    recordPandas.info()
+    print("on exit")
     return recordPandas
     
     

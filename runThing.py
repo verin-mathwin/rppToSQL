@@ -2,11 +2,9 @@ import rppReader
 import geopandas as gpd
 from shapely.geometry import LineString
 
-rppLink = r"RPP_path_here
-outFile = r"Desired_db_path_here"
-outshp = r"Desired_shp_path_here"
 
 
+man = True
 
 def recordsToShp(recordpd):
     coords = recordpd.apply(lambda x: LineString([[float(x['longitude-start']), float(x['latitude-start'])], [float(x['longitude-end']), float(x['latitude-end'])]]), axis=1)
@@ -21,6 +19,6 @@ def recordsToShp(recordpd):
 
 
 
-recordPandas = rppReader.workflowHandler(rppLink, False, False, False, outFile, False, segments=True)
+recordPandas = rppReader.workflowHandler(rppLink, False, False, False, outFile, manualRiWorldUsed=man, segments=True)
 recordsToShp(recordPandas)
 recordPandas.to_csv(outcsv)
