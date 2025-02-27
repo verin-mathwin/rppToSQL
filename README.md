@@ -24,3 +24,8 @@ Whilst technically the output is fully visible in RiProcess etc, I find this nea
 - metadata compilation
 
 EDIT late 2024: Now exports record Pandas innto shapefile and CSV.
+EDIT Feb 2025: The newer units making use of the RiSD (Riegl System Description) have a different structure in their RPPs as a result; the same is true for RPP from _any_ unit touched by RiPROCESS 1.9.6+. I've added some _very_ crude adjustments for the latter (RiPROCESS 1.9.6+ detected) that will allow this tool to run, but **this tool is now waiting on the following further changes**:
+- correcting the detection of RiPROCESS version to a more explicit detection of the RPP format version (d'oh!) - right now it may not properly work with 08_RECEIVED RPP off a RiLOC unit...
+- adding a function/toolset to intgrate the RiSD info into the .db file; right now those tables are left blank for RiSD-era RPP
+- re-connecting the scanscripts properly (this connection has been lost for RiSD units)
+More generally, I also noticed the scanscript parser is still set up for a certain client and needs to be generalised (or rather, made smarter/less vulnerable.)
