@@ -8,6 +8,12 @@ from packaging import version  # Handles version comparisons properly
 
 
 def getModifier(root):
+    """
+    Extracts the modifier data from the XML root element.
+
+    :param root: XML root element.
+    :return: Modifier value from the 'data' attribute or None if not found.
+    """
     modifier_element = root.find(".//modifier")  # Find the modifier tag
     if modifier_element is not None:
         return modifier_element.get("data")  # Return the 'data' attribute value
@@ -15,6 +21,12 @@ def getModifier(root):
 
 
 def determinVer(modifier):
+    """
+    Determines the version category based on the modifier value.
+
+    :param modifier: Modifier string extracted from XML.
+    :return: "A" if modifier is None or below version 1.9.6, otherwise "B".
+    """
     if modifier is None:
         return "A"
     match = re.search(r"\d+\.\d+\.\d+", modifier)
@@ -138,6 +150,15 @@ def timeIssueEditor(rppDic, negIssue, timeZoneEdit):
 
 
 def read194nav(project):
+    """
+    Extracts navigation, LiDAR, and camera device information from an RPP project of version 1.9.4 or below.
+
+    :param project: XML element representing the project.
+    :return: Extracted data dictionaries and lists.
+    """
+    navdevDic = {}
+    lasdevDic = {}
+    camdevDic = {}
     navSystem = [x for x in project.findall(".objects/object/[@kind='SYSTEM']/objects/object/[@kind='NAVDEVICES']")][0]
     nav_fields = [x for x in navSystem.findall(".objects/object/fields/field")]
     lasSystem = [x for x in project.findall(".objects/object/[@kind='SYSTEM']/objects/object/[@kind='LASDEVICES']")][0]
@@ -161,6 +182,10 @@ def read194nav(project):
 
 
 def read195nav():
+    """
+    Placeholder function for reading RISD data.
+    Will be updated when time permits to handle the RISD.
+    """
     pass
 
 
