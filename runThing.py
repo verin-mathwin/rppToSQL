@@ -4,10 +4,11 @@ import geopandas as gpd
 import os
 from shapely.geometry import LineString
 
-rootFolder = r"YOUR_ROOT_FOLDER_PATH_HERE"
+rootFolder = r"D:\Upload_Temp\20250321_SP\compressedProjects\D\KingRocks\KingRocksB_1"
 
 man = True
 collateInRoot = True
+skipPermission = True  # use if you have some open (eg in QGIS) and want to skip those
 
 def recordsToShp(recordpd):
     """
@@ -31,7 +32,11 @@ def recordsToShp(recordpd):
     hasData.dropna(axis='columns', how='all')
     
     # Save to Shapefile
-    hasData.to_file(outshp)
+    try:
+        hasData.to_file(outshp)
+    except PermissionError:
+        print("This file is open...")
+        print('#####################')
     
 
 
